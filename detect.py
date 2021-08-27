@@ -48,8 +48,10 @@ def run(weights='yolov5s.pt',  # model.pt path(s)   模型路径
 
     # Directories   目录
     # increment_path() 增加文件或目录路径
-    save_dir = increment_path(Path(project) / name, exist_ok=exist_ok)  # increment run 增加运行
-    (save_dir / 'labels' if save_txt else save_dir).mkdir(parents=True, exist_ok=True)  # make dir 创建目录
+    # save_dir 运行结果保存地址 runs/detect/exp
+    save_dir = increment_path(Path(project) / name, exist_ok=exist_ok)  # increment run
+    # mkdir 创建目录
+    (save_dir / 'labels' if save_txt else save_dir).mkdir(parents=True, exist_ok=True)
 
     # Initialize 初始化
     set_logging()
@@ -58,13 +60,14 @@ def run(weights='yolov5s.pt',  # model.pt path(s)   模型路径
 
     # Load model 加载模型
     model = attempt_load(weights, map_location=device)  # load FP32 model
-    stride = int(model.stride.max())  # model stride 模型步幅
+    stride = int(model.stride.max())  # model stride 输入和特征图之间的尺度比值
     imgsz = check_img_size(imgsz, s=stride)  # check image size
     names = model.module.names if hasattr(model, 'module') else model.names  # get class names (列表: coco 80个不同类型)
     if half:
         model.half()  # to FP16
 
     # Second-stage classifier   二级分类器
+    # 二级分类器开启后，可以在if后面加入其他检测算法，⚠️唯一的要求是分类和检测模型在同一类上训练。
     classify = False
     if classify:
         modelc = load_classifier(name='resnet50', n=2)  # initialize
@@ -82,20 +85,22 @@ def run(weights='yolov5s.pt',  # model.pt path(s)   模型路径
     if device.type != 'cpu':
         model(torch.zeros(1, 3, imgsz, imgsz).to(device).type_as(next(model.parameters())))  # run once
     t0 = time.time()
-    for path, img, im0s, vid_cap in dataset:
-        img = torch.from_numpy(img).to(device)
-        img = img.half() if half else img.float()  # uint8 to fp16/32
-        img /= 255.0  # 0 - 255 to 0.0 - 1.0
-        if img.ndimension() == 3:
-            img = img.unsqueeze(0)
+    for path, img, im0s, vid_cap in dataset:  # source, 堆叠后矩阵(双目：(2, 384, 640, 3)), 原图, None
+        img = torch.from_numpy(img).to(device)  # CPU GPU加速
+        img = img.half() if half else img.float()  # uint8 to fp16/32 提升精度
+        img /= 255.0  # 0 - 255 to 0.0 - 1.0 归一化
+        if img.ndimension() == 3:  # 返回tensor的维度（整数）
+            img = img.unsqueeze(0)  # 对张量的维度进行增加的操作
 
         # Inference  推理
         t1 = time_sync()
+        # 将数据喂给模型，得到inference信息
         pred = model(img,
                      augment=augment,
                      visualize=increment_path(save_dir / Path(path).stem, mkdir=True) if visualize else False)[0]
 
         # Apply NMS
+        # NMS处理得到预测信息，此时就会得到所有预测框
         pred = non_max_suppression(pred, conf_thres, iou_thres, classes, agnostic_nms, max_det=max_det)
         t2 = time_sync()
 
@@ -104,17 +109,20 @@ def run(weights='yolov5s.pt',  # model.pt path(s)   模型路径
             pred = apply_classifier(pred, modelc, img, im0s)
 
         # Process detections 过程检测
+        # enumerate()函数用于将一个可遍历的数据对象(如列表、元组或字符串)组合为一个索引序列，同时列出数据和数据下标
+        # 遍历预测信息，同时获取标注信息，统计TP，TP+FN，TP+FP
         for i, det in enumerate(pred):  # detections per image 检测每一个图像
-            p, s, im0, frame = path[i], f'{i}: ', im0s[i].copy(), dataset.count  # batch_size >= 1
+            p, s, im0, frame = path[i], f'cam{i}: ', im0s[i].copy(), dataset.count  # batch_size >= 1
 
             p = Path(p)  # to Path
             save_path = str(save_dir / p.name)  # img.jpg
             txt_path = str(save_dir / 'labels' / p.stem) + ('' if dataset.mode == 'image' else f'_{frame}')  # img.txt
-            s += '%gx%g ' % img.shape[2:]  # print string
+            s += '%g*%g ' % img.shape[2:]  # print string 384*640
             gn = torch.tensor(im0.shape)[[1, 0, 1, 0]]  # normalization gain whwh
             imc = im0.copy() if save_crop else im0  # for save_crop
-            if len(det):
-                # Rescale boxes from img_size to im0 size
+
+            if len(det):  # 遍历预测框
+                # Rescale boxes from img_size to im0 size  将框从 img_size 重新缩放为 im0 大小
                 det[:, :4] = scale_coords(img.shape[2:], det[:, :4], im0.shape).round()
 
                 # Print results
@@ -132,12 +140,13 @@ def run(weights='yolov5s.pt',  # model.pt path(s)   模型路径
 
                     if save_img or save_crop or view_img:  # Add bbox to image
                         c = int(cls)  # integer class (c对应每个种类)
+                        # 预测框标签
                         label = None if hide_labels else (names[c] if hide_conf else f'{names[c]} {conf:.3f}')
 
                         # 使用OpenCV在图像 'im0'上绘制一个边界框
-                        # xyxy 左上与右下顶点坐标
+                        # xyxy 左上与右下顶点坐标，im0原图复制
                         cc = plot_one_box(xyxy, im0, label=label, color=colors(c, True), line_thickness=line_thickness)
-                        cv2.circle(img=im0, center=cc, radius=2, color=colors(c, True), thickness=5, lineType=cv2.LINE_AA)
+
                         print("{}[{}]".format(names[c], cc))
 
                         if save_crop:
@@ -148,7 +157,8 @@ def run(weights='yolov5s.pt',  # model.pt path(s)   模型路径
 
             # Stream results
             if view_img:
-                cv2.imshow(str(p), im0)
+                demo = 'cam' + str(p)
+                cv2.imshow(demo, im0)
                 cv2.waitKey(1)  # 1 millisecond
 
             # Save results (image with detections)

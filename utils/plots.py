@@ -72,9 +72,8 @@ def plot_one_box(x, im, color=(128, 128, 128), label=None, line_thickness=3):
     assert im.data.contiguous, 'Image not contiguous. Apply np.ascontiguousarray(im) to plot_on_box() input image.'
     tl = line_thickness or round(0.002 * (im.shape[0] + im.shape[1]) / 2) + 1  # line/font thickness  行/字体 厚度
     c1, c2 = (int(x[0]), int(x[1])), (int(x[2]), int(x[3]))
-    ccx = int((int(x[0]) + int(x[2])) / 2)
-    ccy = int((int(x[1]) + int(x[3])) / 2)
-    cc = (ccx, ccy)
+    # cc[0]宽  cc[1]高
+    cc = (int((int(x[0]) + int(x[2])) / 2), int((int(x[1]) + int(x[3])) / 2))
     # cv2.rectangle(img, (x1, y1), (x2, y2), (255, 0, 0), 2)
     # x1, y1 ------
     # |            |
@@ -82,6 +81,11 @@ def plot_one_box(x, im, color=(128, 128, 128), label=None, line_thickness=3):
     # |            |
     #  --------x2, y2
     cv2.rectangle(im, c1, c2, color, thickness=tl, lineType=cv2.LINE_AA)
+    cv2.rectangle(im, c1, c2, color, thickness=tl, lineType=cv2.LINE_AA)
+
+    if (im.shape[0] / 4 <= cc[1] <= im.shape[0] * 3 / 4) and (im.shape[1] / 4 <= cc[0] <= im.shape[1] * 3 / 4):
+        cv2.circle(img=im, center=cc, radius=2, color=color, thickness=5, lineType=cv2.LINE_AA)
+
     if label:
         tf = max(tl - 1, 1)  # font thickness   字体粗细
         t_size = cv2.getTextSize(label, 0, fontScale=tl / 3, thickness=tf)[0]

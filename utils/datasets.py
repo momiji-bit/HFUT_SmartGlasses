@@ -279,7 +279,7 @@ class LoadStreams:  # multiple IP or RTSP cameras 多个IP或RTSP摄像头
         self.img_size = img_size
         self.stride = stride
 
-        n = len(sources)  # 双目n=2
+        n = len(sources)  # 双目 n=2
         # 初始化一次获取的图像数，帧率，帧数，线程数
         self.imgs, self.fps, self.frames, self.threads = [None] * n, [0] * n, [0] * n, [None] * n
         self.sources = [clean_str(x) for x in sources]  # 可以理解为 self.sources = source 的列表赋值
@@ -327,20 +327,29 @@ class LoadStreams:  # multiple IP or RTSP cameras 多个IP或RTSP摄像头
         self.count = -1
         return self
 
-    def __next__(self):
+    def __next__(self):  # 循环中 返回值
         self.count += 1
         if not all(x.is_alive() for x in self.threads) or cv2.waitKey(1) == ord('q'):  # q to quit
             cv2.destroyAllWindows()
             raise StopIteration
 
         # Letterbox
+        # imgs为原相机一帧数据，获取于 cap.read()
+        # 保留原imgs 拷贝一份于img0
         img0 = self.imgs.copy()
+        # 在满足跨步多约束的同时 调整大小和填充图像
         img = [letterbox(x, self.img_size, auto=self.rect, stride=self.stride)[0] for x in img0]
 
         # Stack
-        img = np.stack(img, 0)
+        # axis等于几就说明在哪个维度上进行堆叠，进行0维堆叠也就是把它们按顺序排放了起来
+        # stack()会增加数组的维度
+        # 单目
+        # (384, 640, 3) -> (1, 384, 640, 3)
+        # 双目
+        # ((384, 640, 3)(384, 640, 3)) -> (2, 384, 640, 3)
+        img = np.stack(img, axis=0)
 
-        # Convert
+        # Convert 转变
         img = img[..., ::-1].transpose((0, 3, 1, 2))  # BGR to RGB, BHWC to BCHW
         img = np.ascontiguousarray(img)
 
