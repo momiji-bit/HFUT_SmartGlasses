@@ -106,7 +106,9 @@ class Ensemble(nn.ModuleList):
             y.append(module(x, augment, profile, visualize)[0])
         # y = torch.stack(y).max(0)[0]  # max ensemble
         # y = torch.stack(y).mean(0)  # mean ensemble
-        y = torch.cat(y, 1)  # nms ensemble
+
+        # torch.cat(y, 1) 按维数1拼接（横着拼）
+        y = torch.cat(y, 1)  # nms ensemble 全体NMS
         return y, None  # inference, train output
 
 
