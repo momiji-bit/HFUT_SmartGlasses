@@ -21,7 +21,7 @@ from utils.torch_utils import select_device, load_classifier, time_sync
 
 @torch.no_grad()
 def run(weights='yolov5s.pt',  # model.pt path(s)   模型路径
-        source='0',  # file/dir/URL/glob, 0 for webcam    文件/目录/网站 0是摄像头
+        source=['0'],  # ['0']单目摄像头 ['0', '1']双目 ...
         imgsz=640,  # inference size (pixels)   图片像素大小
         conf_thres=0.25,  # confidence threshold    置信度阀值
         iou_thres=0.45,  # NMS IOU threshold    极大值抑制IOU阀值
@@ -30,8 +30,8 @@ def run(weights='yolov5s.pt',  # model.pt path(s)   模型路径
         view_img=False,  # show results     显示结果
         save_txt=False,  # save results to *.txt    保存结果到*.txt
         save_conf=False,  # save confidences in --save-txt labels   将置信度保存在 --save-txt 标签中
-        save_crop=False,  # save cropped prediction boxes   保存裁剪好的预测框
-        nosave=True,  # do not save images/videos  是否不保存结果
+        save_crop=True,  # save cropped prediction boxes   保存裁剪好的预测框
+        save_img=False,  # do not save images/videos  是否保存结果
         classes=None,  # filter by class: --class 0, or --class 0 2 3   筛选器只保留指定目标 person=0,bicycle=1...
         agnostic_nms=False,  # class-agnostic NMS   进行nms是否也去除不同类别之间的框，默认False
         augment=False,  # augmented inference   增强推理，推理的时候进行多尺度，翻转等操作(TTA)推理
@@ -45,11 +45,6 @@ def run(weights='yolov5s.pt',  # model.pt path(s)   模型路径
         hide_conf=False,  # hide confidences    隐藏置信度
         half=False,  # use FP16 half-precision inference    使用FP16半精度推理
         ):
-    # save inference images  (save_img bool类型)(endswith('.txt')字符串是否以.txt结尾)
-    save_img = not nosave and not source.endswith('.txt')
-
-    # (webcam bool类型)(isnumeric()字符串是否只由数字组成)
-    webcam = source.isnumeric() or source.endswith('.txt')  # or source.lower().startswith(('rtsp://', 'rtmp://', 'http://', 'https://'))
 
     # Directories   目录
     # increment_path() 增加文件或目录路径
@@ -76,14 +71,11 @@ def run(weights='yolov5s.pt',  # model.pt path(s)   模型路径
         modelc.load_state_dict(torch.load('resnet50.pt', map_location=device)['model']).to(device).eval()
 
     # Dataloader    数据加载器
-    if webcam:
-        view_img = check_imshow()  # bool类型
-        cudnn.benchmark = True  # set True to speed up constant image size inference  将True设置为加速常量图像大小推断
-        dataset = LoadStreams(source, img_size=imgsz, stride=stride)
-        bs = len(dataset)  # batch_size
-    else:
-        dataset = LoadImages(source, img_size=imgsz, stride=stride)
-        bs = 1  # batch_size
+    view_img = check_imshow()  # bool类型
+    cudnn.benchmark = True  # set True to speed up constant image size inference  将True设置为加速常量图像大小推断
+    dataset = LoadStreams(source, img_size=imgsz, stride=stride)
+    bs = len(dataset)  # batch_size
+
     vid_path, vid_writer = [None] * bs, [None] * bs
 
     # Run inference 运行推理
@@ -113,10 +105,7 @@ def run(weights='yolov5s.pt',  # model.pt path(s)   模型路径
 
         # Process detections 过程检测
         for i, det in enumerate(pred):  # detections per image 检测每一个图像
-            if webcam:  # batch_size >= 1
-                p, s, im0, frame = path[i], f'{i}: ', im0s[i].copy(), dataset.count
-            else:
-                p, s, im0, frame = path, '', im0s.copy(), getattr(dataset, 'frame', 0)
+            p, s, im0, frame = path[i], f'{i}: ', im0s[i].copy(), dataset.count  # batch_size >= 1
 
             p = Path(p)  # to Path
             save_path = str(save_dir / p.name)  # img.jpg
@@ -148,16 +137,8 @@ def run(weights='yolov5s.pt',  # model.pt path(s)   模型路径
                         # 使用OpenCV在图像 'im0'上绘制一个边界框
                         # xyxy 左上与右下顶点坐标
                         cc = plot_one_box(xyxy, im0, label=label, color=colors(c, True), line_thickness=line_thickness)
-                        img_h = img.shape[2]
-                        img_w = img.shape[3]
-                        img_hl = img_h / 4
-                        img_hr = img_h * (3 / 4)
-                        img_wu = img_w / 4
-                        img_wd = img_w * (3 / 4)
-                        if (img_hl < cc[0] < img_hr) and (img_wu < cc[1] < img_wd):
-                            # cv2.circle(im, cc, 1, color=(0, 0, 225), line_thickness=1)
-                            cv2.circle(img=im0, center=cc, radius=2, color=colors(c, True), thickness=5, lineType=cv2.LINE_AA)
-                        # print("{}[{}]".format(names[c], cc))
+                        cv2.circle(img=im0, center=cc, radius=2, color=colors(c, True), thickness=5, lineType=cv2.LINE_AA)
+                        print("{}[{}]".format(names[c], cc))
 
                         if save_crop:
                             save_one_box(xyxy, imc, file=save_dir / 'crops' / names[c] / f'{p.stem}.jpg', BGR=True)
@@ -200,7 +181,4 @@ def run(weights='yolov5s.pt',  # model.pt path(s)   模型路径
 
 
 if __name__ == "__main__":
-    cam_l_process = multiprocessing.Process(target=run, kwargs={'source': '0'})
-    cam_r_process = multiprocessing.Process(target=run, kwargs={'source': '1'})
-    cam_r_process.start()
-    cam_l_process.start()
+    run(source=['0', '1'])  # source为列表，内部传入摄像头编号

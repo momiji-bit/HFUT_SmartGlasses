@@ -272,28 +272,25 @@ class LoadWebcam:  # for inference
         return 0
 
 
-class LoadStreams:  # multiple IP or RTSP cameras
-    def __init__(self, sources='streams.txt', img_size=640, stride=32):
+class LoadStreams:  # multiple IP or RTSP cameras 多个IP或RTSP摄像头
+    # source 为列表['0', '1'] 内部为摄像头编号
+    def __init__(self, sources=['0'], img_size=640, stride=32):
         self.mode = 'stream'
         self.img_size = img_size
         self.stride = stride
 
-        if os.path.isfile(sources):
-            with open(sources, 'r') as f:
-                sources = [x.strip() for x in f.read().strip().splitlines() if len(x.strip())]
-        else:
-            sources = [sources]
-
-        n = len(sources)
+        n = len(sources)  # 双目n=2
+        # 初始化一次获取的图像数，帧率，帧数，线程数
         self.imgs, self.fps, self.frames, self.threads = [None] * n, [0] * n, [0] * n, [None] * n
-        self.sources = [clean_str(x) for x in sources]  # clean source names for later
+        self.sources = [clean_str(x) for x in sources]  # 可以理解为 self.sources = source 的列表赋值
         for i, s in enumerate(sources):  # index, source
-            # Start thread to read frames from video stream
+
+            # 此循环获取并打印
+            # 1/2: 0...  success (inf frames 1280x720 at 29.00 FPS)
+            # 2/2: 1...  success (inf frames 1920x1080 at 24.00 FPS))
+
+            # Start thread to read frames from video stream  启动线程从视频流读取帧
             print(f'{i + 1}/{n}: {s}... ', end='')
-            # if 'youtube.com/' in s or 'youtu.be/' in s:  # if source is YouTube video
-            #     check_requirements(('pafy', 'youtube_dl'))
-            #     import pafy
-            #     s = pafy.new(s).getbest(preftype="mp4").url  # YouTube URL
             s = eval(s) if s.isnumeric() else s  # i.e. s = '0' local webcam
             cap = cv2.VideoCapture(s)
             assert cap.isOpened(), f'Failed to open {s}'
@@ -302,7 +299,7 @@ class LoadStreams:  # multiple IP or RTSP cameras
             self.fps[i] = max(cap.get(cv2.CAP_PROP_FPS) % 100, 0) or 30.0  # 30 FPS fallback
             self.frames[i] = max(int(cap.get(cv2.CAP_PROP_FRAME_COUNT)), 0) or float('inf')  # infinite stream fallback
 
-            _, self.imgs[i] = cap.read()  # guarantee first frame
+            _, self.imgs[i] = cap.read()  # guarantee first frame  保证第一帧
             self.threads[i] = Thread(target=self.update, args=([i, cap]), daemon=True)
             print(f" success ({self.frames[i]} frames {w}x{h} at {self.fps[i]:.2f} FPS)")
             self.threads[i].start()
