@@ -56,8 +56,8 @@ colors = [[random.randint(0, 255) for _ in range(3)] for _ in names]
 img01 = torch.zeros((1, 3, imgsz, imgsz), device=device)  # init img
 _ = model(img01.half() if half else img01) if device.type != 'cpu' else None  # run once
 
-cap1 = cv2.VideoCapture(0)
-cap2 = cv2.VideoCapture(1)
+cap1 = cv2.VideoCapture(1)
+cap2 = cv2.VideoCapture(0)
 
 while (True):
 
@@ -113,7 +113,7 @@ while (True):
     pred = non_max_suppression(pred, 0.25, 0.45, classes=None, agnostic=False)
     # predd = non_max_suppression(predd, 0.25, 0.45, classes=None, agnostic=False)
 
-    # ---write----------------------------
+    # ------------------------write----------------------------
     dislist, disp = dis_co(imgs[0], imgs2[0])  # 返回 3D图像，视差图
 
 
