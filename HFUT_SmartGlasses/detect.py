@@ -67,7 +67,7 @@ def run(weights='yolov5s.pt',  # model.pt path(s)   模型路径
         model.half()  # to FP16
 
     # Second-stage classifier   二级分类器
-    # 二级分类器开启后，可以在if后面加入其他检测算法，⚠️唯一的要求是分类和检测模型在同一类上训练。
+    # 二级分类器开启后，可以在if后面加入其他检测算法，⚠️唯一的要求是分类和检测模型在相同数据集上训练。
     classify = False
     if classify:
         modelc = load_classifier(name='resnet50', n=2)  # initialize
@@ -191,4 +191,4 @@ def run(weights='yolov5s.pt',  # model.pt path(s)   模型路径
 
 
 if __name__ == "__main__":
-    run(source=['0', '1'])  # source为列表，内部传入摄像头编号
+    run(source=['0', '1'])  # source为列表，内部传入摄像头编号字符串
