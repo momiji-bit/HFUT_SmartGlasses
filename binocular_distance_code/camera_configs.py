@@ -27,7 +27,7 @@ T = np.array([-16.339672559387495, 0.342232831032356, -1.081531326484493])
 
 size = (1080, 720)  # 图像尺寸
 # 立体校正教程 https://www.cnblogs.com/zhiyishou/p/5767592.html
-# 进行立体校正 stereoRectify()
+# 进行立体校正 stereoRectify() https://blog.csdn.net/zfjBIT/article/details/94436644
 R1, R2, P1, P2, Q, validPixROI1, validPixROI2 = cv2.stereoRectify(left_camera_matrix, left_distortion,
                                                                   right_camera_matrix, right_distortion, size, R,
                                                                   T)
