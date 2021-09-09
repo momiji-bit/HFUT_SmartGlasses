@@ -20,7 +20,13 @@
 import cv2
 import numpy as np
 import glob
-
+"""
+张氏标定相关具体讲解和相机采样过程，respect to 张正友：
+（上、中、下）
+https://blog.csdn.net/qq_37059483/article/details/79481014
+https://blog.csdn.net/qq_37059483/article/details/79482541
+https://blog.csdn.net/qq_37059483/article/details/79836411
+"""
 # 设置寻找亚像素角点的参数，采用的停止准则是最大循环次数30和最大误差容限0.001
 criteria = (cv2.TERM_CRITERIA_MAX_ITER | cv2.TERM_CRITERIA_EPS, 30, 0.001)
 

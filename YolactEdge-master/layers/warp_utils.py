@@ -1,10 +1,6 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from typing import List
-from utils import timer
-
-from data.config import cfg
 
 try:
     from torch2trt import torch2trt

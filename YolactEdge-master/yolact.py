@@ -1,4 +1,4 @@
-import torch, torchvision
+import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torchvision.models.resnet import Bottleneck, conv1x1, conv3x3
@@ -21,8 +21,6 @@ from utils.functions import MovingAverage
 
 import logging
 import os
-
-import copy
 
 try:
     from torch2trt import torch2trt

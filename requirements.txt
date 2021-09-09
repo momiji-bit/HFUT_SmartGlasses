@@ -30,3 +30,14 @@ pandas
 # pycocotools>=2.0  # COCO mAP
 # albumentations>=1.0.3
 thop  # FLOPs computation
+
+# for YolactEdge ------------------------------
+git clone https://github.com/NVIDIA-AI-IOT/torch2trt
+cd torch2trt
+sudo python setup.py install --plugins
+
+# Cython needs to be installed before pycocotools
+pip install cython
+pip install opencv-python pillow matplotlib
+pip install git+https://github.com/haotian-liu/cocoapi.git#"egg=pycocotools&subdirectory=PythonAPI"
+pip install GitPython termcolor tensorboard
