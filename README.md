@@ -6,4 +6,9 @@ hi各位HFUTer这是我们的校级大创项目，基于图像识别实现辅助
 
 代码完善中...
 
-![相机标定棋盘格](/Users/gujihao/repo/HFUT_SmartGlasses/相机标定棋盘格.jpg)
+## V0.1 实现了目标检测同时测量距离
+
+![截屏2021-09-11 00.56.34](/Users/gujihao/repo/HFUT_SmartGlasses/img/截屏2021-09-11 00.56.34.png)
+
+![截屏2021-09-10 16.53.45](/Users/gujihao/repo/HFUT_SmartGlasses/img/截屏2021-09-10 16.53.45.png)
+

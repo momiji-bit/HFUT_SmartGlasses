@@ -1,22 +1,3 @@
-# # 双目同步摄像机左右画面分割
-# import cv2
-#
-# cap = cv2.VideoCapture(0)
-# while True:
-#     ref, frame = cap.read()
-#     # frame_h = frame.shape[0]
-#     # frame_w = frame.shape[1]
-#     # left_frame = frame[0:frame_h, 0:int(frame_w / 2)]
-#     # right_frame = frame[0:frame_h, int(frame_w / 2):frame_w]
-#     # cv2.imshow("left", left_frame)
-#     # cv2.imshow("right", right_frame)
-#     ret, cp_img = cv2.findChessboardCorners(image=frame, patternSize=(9, 6),corners=None)
-#     if ret:
-#         cv2.drawChessboardCorners(image=frame, patternSize=(9, 6), corners=cp_img, patternWasFound=ret)
-#     cv2.imshow('Chessboard Corners', frame)
-#     cv2.waitKey(1)
-#     Vision.makeCheckerboard
-
 import cv2
 import numpy as np
 import glob
@@ -37,7 +18,7 @@ objp[:, :2] = np.mgrid[0:9, 0:6].T.reshape(-1, 2)  # 将世界坐标系建在标
 obj_points = []  # 存储3D点
 img_points = []  # 存储2D点
 
-images = glob.glob("../HFUT_SmartGlasses/cam_demarcate/*.jpg")
+images = glob.glob("l_imgs/*.jpg")
 for fname in images:
     img = cv2.imread(fname)
     cv2.imshow('img', img)
@@ -74,3 +55,19 @@ print("dist:\n", dist)  # 畸变系数   distortion cofficients = (k_1,k_2,p_1,p
 print("rvecs:\n", rvecs)  # 旋转向量  # 外参数
 print("tvecs:\n", tvecs)  # 平移向量  # 外参数
 print("-----------------------------------------------------")
+
+
+import cv2
+import glob  # python内建文件操作模块
+
+l_imgs_path_list = glob.glob("l_imgs/*.jpg")
+r_imgs_path_list = glob.glob("r_imgs/*.jpg")
+for l_img_path in l_imgs_path_list:
+    r_img_path = l_img_path.replace('l', 'r')
+    l_img = cv2.imread(l_img_path)
+    r_img = cv2.imread(r_img_path)
+    cv2.imshow('l_img', l_img)
+    cv2.imshow('r_img', r_img)
+
+
+

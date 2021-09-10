@@ -191,4 +191,4 @@ def run(weights='yolov5s.pt',  # model.pt path(s)   模型路径
 
 
 if __name__ == "__main__":
-    run(source=['0', '1'])  # source为列表，内部传入摄像头编号字符串
+    run(source=['0'])  # source为列表，内部传入摄像头编号字符串

@@ -81,7 +81,6 @@ def plot_one_box(x, im, color=(128, 128, 128), label=None, line_thickness=3):
     # |            |
     #  --------x2, y2
     cv2.rectangle(im, c1, c2, color, thickness=tl, lineType=cv2.LINE_AA)
-    cv2.rectangle(im, c1, c2, color, thickness=tl, lineType=cv2.LINE_AA)
 
     if (im.shape[0] / 4 <= cc[1] <= im.shape[0] * 3 / 4) and (im.shape[1] / 4 <= cc[0] <= im.shape[1] * 3 / 4):
         cv2.circle(img=im, center=cc, radius=2, color=color, thickness=5, lineType=cv2.LINE_AA)

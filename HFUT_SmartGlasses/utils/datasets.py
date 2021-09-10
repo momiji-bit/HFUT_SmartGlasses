@@ -279,28 +279,37 @@ class LoadStreams:  # multiple IP or RTSP cameras 多个IP或RTSP摄像头
         self.img_size = img_size
         self.stride = stride
 
-        n = len(sources)  # 双目 n=2
+        n = len(sources)  # n=1
+
         # 初始化一次获取的图像数，帧率，帧数，线程数
-        self.imgs, self.fps, self.frames, self.threads = [None] * n, [0] * n, [0] * n, [None] * n
+        self.imgs, self.fps, self.frames, self.threads, self.img_source = [None] * n, [0] * n, [0] * n, [None] * n, [None] * n
         self.sources = [clean_str(x) for x in sources]  # 可以理解为 self.sources = source 的列表赋值
         for i, s in enumerate(sources):  # index, source
-
             # 此循环获取并打印
             # 1/2: 0...  success (inf frames 1280x720 at 29.00 FPS)
             # 2/2: 1...  success (inf frames 1920x1080 at 24.00 FPS))
 
             # Start thread to read frames from video stream  启动线程从视频流读取帧
-            print(f'{i + 1}/{n}: {s}... ', end='')
+            print(f'cam -> ', end='')
             s = eval(s) if s.isnumeric() else s  # i.e. s = '0' local webcam
             cap = cv2.VideoCapture(s)
             assert cap.isOpened(), f'Failed to open {s}'
             w = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
             h = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
             self.fps[i] = max(cap.get(cv2.CAP_PROP_FPS) % 100, 0) or 30.0  # 30 FPS fallback
+            # 无限流回退
             self.frames[i] = max(int(cap.get(cv2.CAP_PROP_FRAME_COUNT)), 0) or float('inf')  # infinite stream fallback
 
-            _, self.imgs[i] = cap.read()  # guarantee first frame  保证第一帧
-            self.threads[i] = Thread(target=self.update, args=([i, cap]), daemon=True)
+
+            # 同步摄像机图像分割
+            # ref, frame = cap.read()
+            # left_frame = frame[0:h, 0:int(w / 2)]  # 主摄像头
+            # right_frame = frame[0:h, int(w / 2):w]
+            _, frame = cap.read()  # guarantee first frame  保证有一帧画面
+            self.img_source[i] = frame
+            self.imgs[i] = frame[0:h, int(w / 2):w]  # 取画面左半画面
+
+            self.threads[i] = Thread(target=self.update, args=([i, cap, w, h]), daemon=True)
             print(f" success ({self.frames[i]} frames {w}x{h} at {self.fps[i]:.2f} FPS)")
             self.threads[i].start()
         print('')  # newline
@@ -311,7 +320,7 @@ class LoadStreams:  # multiple IP or RTSP cameras 多个IP或RTSP摄像头
         if not self.rect:
             print('WARNING: Different stream shapes detected. For optimal performance supply similarly-shaped streams.')
 
-    def update(self, i, cap):
+    def update(self, i, cap, w, h):
         # Read stream `i` frames in daemon thread
         n, f, read = 0, self.frames[i], 1  # frame number, frame array, inference every 'read' frame
         while cap.isOpened() and n < f:
@@ -320,6 +329,9 @@ class LoadStreams:  # multiple IP or RTSP cameras 多个IP或RTSP摄像头
             cap.grab()
             if n % read == 0:
                 success, im = cap.retrieve()
+                self.img_source[i] = im if success else self.imgs[i] * 0
+
+                im = im[0:h, int(w / 2):w]
                 self.imgs[i] = im if success else self.imgs[i] * 0
             time.sleep(1 / self.fps[i])  # wait time
 
@@ -353,7 +365,7 @@ class LoadStreams:  # multiple IP or RTSP cameras 多个IP或RTSP摄像头
         img = img[..., ::-1].transpose((0, 3, 1, 2))  # BGR to RGB, BHWC to BCHW
         img = np.ascontiguousarray(img)
 
-        return self.sources, img, img0, None
+        return self.sources, img, img0, None, self.img_source
 
     def __len__(self):
         return len(self.sources)  # 1E12 frames = 32 streams at 30 FPS for 30 years
