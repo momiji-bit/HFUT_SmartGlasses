@@ -9,6 +9,7 @@ from utils.datasets import LoadStreams
 from utils.general import check_img_size, non_max_suppression, scale_coords, increment_path
 from utils.plots import colors, plot_one_box
 from utils.torch_utils import select_device, time_sync
+
 FILE = Path(__file__).absolute()
 sys.path.append(FILE.parents[0].as_posix())  # add yolov5/ to path
 
@@ -41,49 +42,49 @@ T = np.array([-1.195626478798067e+02, -0.010039319104597, -0.824542649621331])
 
 # 立体校正教程 https://www.cnblogs.com/zhiyishou/p/5767592.html
 # 进行立体校正 stereoRectify() https://blog.csdn.net/zfjBIT/article/details/94436644
-R1, R2, P1, P2, Q, validPixROI1, validPixROI2 = cv2.stereoRectify(left_camera_matrix, left_distortion,
+R1, R2, PP1, PP2, Q, validPixROI1, validPixROI2 = cv2.stereoRectify(left_camera_matrix, left_distortion,
                                                                   right_camera_matrix, right_distortion,
                                                                   size, R, T)
 # 计算更正map
-left_map1, left_map2 = cv2.initUndistortRectifyMap(left_camera_matrix, left_distortion, R1, P1, size, cv2.CV_16SC2)
-right_map1, right_map2 = cv2.initUndistortRectifyMap(right_camera_matrix, right_distortion, R2, P2, size, cv2.CV_16SC2)
+left_map1, left_map2 = cv2.initUndistortRectifyMap(left_camera_matrix, left_distortion, R1, PP1, size, cv2.CV_16SC2)
+right_map1, right_map2 = cv2.initUndistortRectifyMap(right_camera_matrix, right_distortion, R2, PP2, size, cv2.CV_16SC2)
 
 # ==================================================================================================================参数
 
 # ===========================================================================================================SGBM立体匹配
-minDisparity = 0
-numDisparities = 16*25
-blockSize = 5
-P1 = 8*3*blockSize**2
-P2 = 4*P1
-disp12MaxDiff = -1
-preFilterCap = None
-uniquenessRatio = 7
-speckleWindowSize = 0
-speckleRange = 2
-mode = None
-
-SGBM_stereo = cv2.StereoSGBM_create(minDisparity=minDisparity,  # 最小视差值:最小可能的视差值,通常为0，但有时校正算法可以移动图像，因此需要相应调整此参数
-                                    numDisparities=numDisparities,  #视差范围:最大视差减去最小视差,该值始终大于零,在当前的实现中，这个参数必须能被 16 整除
-                                    blockSize=blockSize,  # 匹配块大小(SADWindowSize): 它必须是一个奇数 >=1，通常应该在 3-11 范围内
-                                    P1=P1,  # 第一个参数控制视差平滑度，对相邻像素之间正负 1 的视差变化惩罚
-                                    P2=P2,  # 第二个参数控制视差平滑度，值越大视差越平滑，相邻像素之间视差变化超过 1 的惩罚
-                                    disp12MaxDiff=disp12MaxDiff,  # 左右视差检查中允许的最大差异（以整数像素为单位）。 将其设置为 -1 以禁用检查。
-                                    preFilterCap=preFilterCap,  # 预过滤图像像素的截断值。 该算法首先计算每个像素的 x 导数，并按 [-preFilterCap, preFilterCap] 间隔裁剪其值。将结果值传递给 Birchfield-Tomasi 像素成本函数。
-                                    uniquenessRatio=uniquenessRatio,  # 视差唯一性百分比， 视差窗口范围内最低代价是次低代价的(1 + uniquenessRatio/100)倍时，最低代价对应的视差值才是该像素点的视差，否则该像素点的视差为 0，通常为5~15.
-                                    speckleWindowSize=speckleWindowSize,  # 平滑视差区域的最大尺寸，以考虑其噪声斑点和无效。将其设置为0可禁用斑点过滤。否则，将其设置在50-200的范围内。
-                                    speckleRange=speckleRange,  # 视差变化阈值，每个连接组件内的最大视差变化。如果你做斑点过滤，将参数设置为正值，它将被隐式乘以16.通常，1或2就足够好了
-                                    mode=mode)  # 将其设置为 StereoSGBM::MODE_HH 以运行完整的两遍动态编程算法。 它将消耗 O(W*H*numDisparities) 字节，这对于 640x480 立体声来说很大，对于 HD 尺寸的图片来说很大。 默认情况下，它设置为 false 。
+# minDisparity = 0  # 最小视差值:最小可能的视差值,通常为0，但有时校正算法可以移动图像，因此需要相应调整此参数
+# numDisparities = 16 * 25  # 视差范围:最大视差减去最小视差,该值始终大于零,在当前的实现中，这个参数必须能被 16 整除
+# blockSize = 5  # 匹配块大小(SADWindowSize): 它必须是一个奇数 >=1，通常应该在 3-11 范围内
+# P1 = 8 * 3 * blockSize ** 2  # 第一个参数控制视差平滑度，对相邻像素之间正负 1 的视差变化惩罚
+# P2 = 4 * P1  # 第二个参数控制视差平滑度，值越大视差越平滑，相邻像素之间视差变化超过 1 的惩罚
+# disp12MaxDiff = -1  # 左右视差检查中允许的最大差异（以整数像素为单位）。 将其设置为 -1 以禁用检查。
+# preFilterCap = None  # 预过滤图像像素的截断值:该算法首先计算每个像素的 x 导数，并按 [-preFilterCap, preFilterCap] 间隔裁剪其值。将结果值传递给 Birchfield-Tomasi 像素成本函数
+# uniquenessRatio = 7  # 视差唯一性百分比， 视差窗口范围内最低代价是次低代价的(1 + uniquenessRatio/100)倍时，最低代价对应的视差值才是该像素点的视差，否则该像素点的视差为 0，通常为5~15
+# speckleWindowSize = 0  # 平滑视差区域的最大尺寸，以考虑其噪声斑点和无效。将其设置为0可禁用斑点过滤。否则，将其设置在50-200的范围内
+# speckleRange = 2  # 视差变化阈值，每个连接组件内的最大视差变化。如果你做斑点过滤，将参数设置为正值，它将被隐式乘以16.通常，1或2就足够好了
+# mode = None  # 将其设置为 StereoSGBM::MODE_HH 以运行完整的两遍动态编程算法。 它将消耗 O(W*H*numDisparities) 字节，这对于 640x480 立体声来说很大，对于 HD 尺寸的图片来说很大。 默认情况下，它设置为 false
 
 
-def dis_co(frame1, frame2):
-    img1_rectified = cv2.remap(frame1, left_map1, left_map2, cv2.INTER_LINEAR)  # 图像校准
-    img2_rectified = cv2.remap(frame2, right_map1, right_map2, cv2.INTER_LINEAR)
-    imgL = cv2.cvtColor(img1_rectified, cv2.COLOR_BGR2GRAY)
-    imgR = cv2.cvtColor(img2_rectified, cv2.COLOR_BGR2GRAY)
-    disp = SGBM_stereo.compute(imgL, imgR).astype(np.float32) / 16.0  # disparity返回视差
-    threeD = cv2.reprojectImageTo3D(disp, Q)  # 返回_3dImage 3D图像
-    return threeD, disp
+# 创建滑动条
+def nothing(x):
+    pass
+
+
+cv2.namedWindow("SGNM_disparity")
+cv2.createTrackbar("minDisparity", 'SGNM_disparity', 0, 10, nothing)
+cv2.createTrackbar("numDisparities", 'SGNM_disparity', 25, 40, nothing)
+cv2.createTrackbar("blockSize", 'SGNM_disparity', 5, 20, nothing)
+cv2.createTrackbar("disp12MaxDiff", 'SGNM_disparity', -1, 500, nothing)
+cv2.createTrackbar("uniquenessRatio", 'SGNM_disparity', 7, 20, nothing)
+cv2.createTrackbar("speckleWindowSize", 'SGNM_disparity', 0, 300, nothing)
+cv2.createTrackbar("speckleRange", 'SGNM_disparity', 2, 4, nothing)
+
+
+
+
+
+
+
 # ===========================================================================================================SGBM立体匹配
 
 
@@ -151,6 +152,41 @@ def run(weights='yolov5s.pt',  # model.pt path(s)   模型路径
         img_match = img_source[0][0:frame_h, 0:int(frame_w / 2)]
 
         # 双目测距
+        minDisparity = cv2.getTrackbarPos('minDisparity', 'SGNM_disparity')
+        numDisparities = 16 * cv2.getTrackbarPos('numDisparities', 'SGNM_disparity')
+        blockSize = cv2.getTrackbarPos('blockSize', 'SGNM_disparity')
+        P1 = 8 * 3 * blockSize * blockSize
+        P2 = 32 * 3 * blockSize * blockSize
+        disp12MaxDiff = cv2.getTrackbarPos('disp12MaxDiff', 'SGNM_disparity')
+        preFilterCap = cv2.getTrackbarPos('preFilterCap', 'SGNM_disparity')
+        uniquenessRatio = cv2.getTrackbarPos('uniquenessRatio', 'SGNM_disparity')
+        speckleWindowSize = cv2.getTrackbarPos('speckleWindowSize', 'SGNM_disparity')
+        speckleRange = cv2.getTrackbarPos('speckleRange', 'SGNM_disparity')
+        mode = None
+
+
+        SGBM_stereo = cv2.StereoSGBM_create(minDisparity=minDisparity,
+                                            numDisparities=numDisparities,
+                                            blockSize=blockSize,
+                                            P1=P1,
+                                            P2=P2,
+                                            disp12MaxDiff=disp12MaxDiff,
+                                            preFilterCap=preFilterCap,
+                                            uniquenessRatio=uniquenessRatio,
+                                            speckleWindowSize=speckleWindowSize,
+                                            speckleRange=speckleRange,
+                                            mode=mode
+                                            )
+
+        def dis_co(frame1, frame2):
+            img1_rectified = cv2.remap(frame1, left_map1, left_map2, cv2.INTER_LINEAR)  # 图像校准
+            img2_rectified = cv2.remap(frame2, right_map1, right_map2, cv2.INTER_LINEAR)
+            imgL = cv2.cvtColor(img1_rectified, cv2.COLOR_BGR2GRAY)
+            imgR = cv2.cvtColor(img2_rectified, cv2.COLOR_BGR2GRAY)
+            disp = SGBM_stereo.compute(imgL, imgR).astype(np.float32) / 16.0  # disparity返回视差
+            threeD = cv2.reprojectImageTo3D(disp, Q)  # 返回_3dImage 3D图像
+            return threeD, disp
+
         dislist, disp = dis_co(img_match, im0s[0])
         # cv2.imshow("0", im0s[0])
         # cv2.imshow("1", img_match)
@@ -191,11 +227,12 @@ def run(weights='yolov5s.pt',  # model.pt path(s)   模型路径
                     plot_one_box(xyxy, im0, label=label, color=colors(c, True), line_thickness=3)
             print(f'{s}Done. ({t2 - t1:.3f}s)')
 
-        cv2.imshow('Demo', im0)
-        cv2.imshow('source', img_source[0])
-        # dislist = np.ndarray(0)
+        # cv2.imshow('Demo', im0)
+        # cv2.imshow('source', img_source[0])
         cv2.imshow('SGNM_disparity', (disp - minDisparity) / numDisparities)
         cv2.waitKey(1)  # 1 millisecond
+
+
 # ===============================================================================================================目标检测
 
 
