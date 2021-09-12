@@ -8,7 +8,7 @@ num = 0
 print("按 esc 退出get_LR_imgs_tool")
 print("按 空格 拍摄左右相机照片")
 while cap.isOpened():
-    ref, frame = cap.read()
+    ref,  frame = cap.read()
     frame_h = frame.shape[0]
     frame_w = frame.shape[1]
     left_frame = frame[0:frame_h, 0:int(frame_w / 2)]

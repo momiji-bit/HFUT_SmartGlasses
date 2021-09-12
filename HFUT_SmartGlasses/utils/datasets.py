@@ -307,7 +307,7 @@ class LoadStreams:  # multiple IP or RTSP cameras 多个IP或RTSP摄像头
             # right_frame = frame[0:h, int(w / 2):w]
             _, frame = cap.read()  # guarantee first frame  保证有一帧画面
             self.img_source[i] = frame
-            self.imgs[i] = frame[0:h, int(w / 2):w]  # 取画面左半画面
+            self.imgs[i] = frame[0:h, int(w / 2):w]  # 取画面you半画面
 
             self.threads[i] = Thread(target=self.update, args=([i, cap, w, h]), daemon=True)
             print(f" success ({self.frames[i]} frames {w}x{h} at {self.fps[i]:.2f} FPS)")
