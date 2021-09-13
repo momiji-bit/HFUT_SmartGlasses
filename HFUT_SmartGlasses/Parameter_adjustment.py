@@ -20,39 +20,39 @@ def nothing(x):
 
 cv2.namedWindow("SGNM_disparity")
 cv2.createTrackbar("minDisparity", 'SGNM_disparity', 0, 10, nothing)
-cv2.createTrackbar("numDisparities", 'SGNM_disparity', 5, 40, nothing)
-cv2.createTrackbar("blockSize", 'SGNM_disparity', 3, 20, nothing)
+cv2.createTrackbar("numDisparities", 'SGNM_disparity', 10, 40, nothing)
+cv2.createTrackbar("blockSize", 'SGNM_disparity', 1, 20, nothing)
 cv2.createTrackbar("disp12MaxDiff", 'SGNM_disparity', -1, 500, nothing)
-cv2.createTrackbar("uniquenessRatio", 'SGNM_disparity', 9, 20, nothing)
+cv2.createTrackbar("uniquenessRatio", 'SGNM_disparity', 3, 20, nothing)
 cv2.createTrackbar("speckleWindowSize", 'SGNM_disparity', 0, 300, nothing)
 cv2.createTrackbar("speckleRange", 'SGNM_disparity', 2, 4, nothing)
 # ===============================================================================================================相机参数
-w = 512
-h = 288
+w = 640
+h = 360
 size = (w, h)  # 图像尺寸
 # distCoeffs 畸变系数向量 (k_1, k_2, p_1, p_2, k_1) k径向畸变 p切向畸变
 # 左相机矩阵
-left_camera_matrix = np.array([[8.266245794563636e+02, 0.320734762042084, 6.303087858254347e+02],
-                               [0, 8.262850960684534e+02, 5.008823654487776e+02],
+left_camera_matrix = np.array([[8.315761264277194e+02, -0.067100532264039, 6.270773295697649e+02],
+                               [0, 8.317328040960693e+02, 4.950599408765926e+02],
                                [0., 0, 1.0000]])
 # 左相机失真
 left_distortion = np.array(
-    [[-0.055097426778034, 0.197521492228489, 2.827457760179693e-04, 1.149988726255624e-04, -0.197397365942433]])
+    [[-0.052497003322815, 0.219130301798893, -3.773141760469683e-04, -0.001161698975305, -0.247900058208785]])
 
 # 右相机矩阵
-right_camera_matrix = np.array([[8.320877963551811e+02, -0.365607560675510, 6.490189602563594e+02],
-                                [0, 8.314189328541544e+02, 4.977034783319434e+02],
+right_camera_matrix = np.array([[8.365744888406663e+02, 0.337600854848549, 6.496769813852944e+02],
+                                [0, 8.367057793927418e+02, 4.919242249466425e+02],
                                 [0., 0, 1.0000]])
 # 右相机失真
 right_distortion = np.array(
-    [[-0.048733096175927, 0.172520362597549, 4.097873985277556e-04, -9.099081952478782e-04, -0.173197883503271]])
+    [[-0.055965519717472, 0.238054946405461, -2.395780095168055e-04, -4.380167767466566e-04, -0.288577515484556]])
 
 # 相机旋转矩阵
-R = np.matrix([[0.999999615354522, 1.954846267501697e-04, -8.550301563461386e-04],
-               [-1.944129435451995e-04, 0.999999195733541, 0.001253290021815],
-               [8.552744676061869e-04, -0.001253123310813, 0.999998849093114]])
+R = np.matrix([[0.999936367261596, -2.560085328833769e-04, 0.011278115414964],
+               [2.352383714212434e-04, 0.999998274148975, 0.001842922130743],
+               [-0.011278567754408, -0.001840151815058, 0.999934701743422]])
 # 相机平移矢量
-T = np.array([-1.195626478798067e+02, -0.010039319104597, -0.824542649621331])
+T = np.array([-1.198999022890396e+02, 0.022648001773392, -0.885207100250237])
 # R T 都可以通过 cv2.stereoCalibrate() 计算得出
 
 # 立体校正教程 https://www.cnblogs.com/zhiyishou/p/5767592.html
