@@ -56,7 +56,7 @@ right_map1, right_map2 = cv2.initUndistortRectifyMap(right_camera_matrix, right_
 
 # ===========================================================================================================SGBM立体匹配
 minDisparity = 0  # 最小视差值:最小可能的视差值,通常为0，但有时校正算法可以移动图像，因此需要相应调整此参数
-numDisparities = 16 * 9  # 视差范围:最大视差减去最小视差,该值始终大于零,在当前的实现中，这个参数必须能被 16 整除
+numDisparities = 16 * 5  # 视差范围:最大视差减去最小视差,该值始终大于零,在当前的实现中，这个参数必须能被 16 整除
 blockSize = 1  # 匹配块大小(SADWindowSize): 它必须是一个奇数 >=1，通常应该在 3-11 范围内
 P1 = 8 * 3 * blockSize * blockSize  # 第一个参数控制视差平滑度，对相邻像素之间正负 1 的视差变化惩罚
 P2 = 4 * P1  # 第二个参数控制视差平滑度，值越大视差越平滑，相邻像素之间视差变化超过 1 的惩罚
@@ -176,24 +176,48 @@ def run(weights='yolov5s.pt',  # model.pt path(s)   模型路径
                     point_list = [point1, point2, point3, point4, point5, point6, point7, point8, point9]
                     distance = []
                     for point in point_list:
-                        cv2.circle(img=demo_img, center=point, radius=2, color=colors(c, True), thickness=2)
+                        # cv2.circle(img=demo_img, center=point, radius=2, color=colors(c, True), thickness=1)
+
                         dist = (dislist[point[1]][point[0]] / 5)[-1]
-                        dist = dist * 0.373
-                        if 0 <= dist < 1000:
+                        # dist = dist * 0.373
+                        if 0 <= dist < 8000:
                             distance.append(dist)
                     distance.sort()
-                    if len(distance) < 3:
+                    if len(distance) < 1:
                         label = f'{names[c]} {int(conf * 100)}% null'
                     else:
-                        dist = distance[1]
+                        dist = distance[0]
                         label = f'{names[c]} {int(conf * 100)}% {dist / 100:.2f}m'
+
+                    if point5[8] < demo_img.shape[0]/4:
+                        if demo_img.shape[1] / 5 < point5[0] < demo_img.shape[1] * 4 / 5:
+                            print(f'-far-center- {label}')
+                        elif point5[0] < demo_img.shape[1] / 5:
+                            print(f'-far-left- {label}')
+                        elif point5[0] > demo_img.shape[1] * 4 / 5:
+                            print(f'-far-right- {label}')
+                    else:
+                        if demo_img.shape[1] / 5 < point5[0] < demo_img.shape[1] * 4 / 5:
+                            print(f'-center- {label}')
+                        elif point5[0] < demo_img.shape[1] / 5:
+                            print(f'-left- {label}')
+                        elif point5[0] > demo_img.shape[1] * 4 / 5:
+                            print(f'-right- {label}')
+
+                    cv2.line(img=demo_img, pt1=(int(demo_img.shape[1]/2), int(demo_img.shape[0])), pt2=point5, color=(96, 96, 96), thickness=2)
+                    cv2.circle(img=demo_img, center=point5, radius=2, color=(96, 96, 96), thickness=2)
                     plot_one_box(xyxy, demo_img, label=label, color=colors(c, True), line_thickness=2)
         t2 = time_sync()
-        print(f'{t2 - t1:.3f}s Done')
+        print(f'---------------- {t2 - t1:.3f}s Done')
         # demo_img = cv2.resize(demo_img, (960, 576))
         cv2.imshow('Demo', demo_img)
         x = (disp - minDisparity) / numDisparities
         cv2.imshow('SGNM_disparity', x)
         cv2.waitKey(1)  # 1 millisecond
+        if cv2.waitKey(1) == 27:
+            cap.release()
+            cv2.destroyAllWindows()
+            break
+
 
 run()
