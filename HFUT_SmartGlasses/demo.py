@@ -121,6 +121,13 @@ def run(weights='yolov5s.pt',  # model.pt path(s)   模型路径
         model(torch.zeros(1, 3, imgsz, imgsz).to(device).type_as(next(model.parameters())))  # run once
 
     cap = cv2.VideoCapture(0)
+
+    # cap.set();  # 画面宽
+    cap.set(cv2.CAP_PROP_FRAME_WIDTH, 2560)  # 画面高
+    cap.set(cv2.CAP_PROP_FRAME_WIDTH, 960)  # 画面高
+
+    cap.set(cv2.CAP_PROP_FPS, 60)
+    # cap.set(cv2.CV_CAP_PROP_FOURCC, cv2.CV_FOURCC('M', 'J', 'P', 'G')); # 压缩格式 mjpg
     frame_w = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
     frame_h = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
 

@@ -106,6 +106,10 @@ def dis_co(frame1, frame2):
     return threeD, disp
 
 cap = cv2.VideoCapture(0)
+# cap.set(cv2.CV_CAP_PROP_FPS, 60)
+# cap.set(cv2.CV_CAP_PROP_FOURCC, cv2.CV_FOURCC('M', 'J', 'P', 'G')); # 压缩格式 mjpg
+# cap.set(cv2.CV_CAP_PROP_FRAME_WIDTH, 1920);  # 画面宽
+# cap.set(cv2.CV_CAP_PROP_FRAME_HEIGHT, 1080);  # 画面高
 cap_w = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
 cap_h = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
 while cap.isOpened():
