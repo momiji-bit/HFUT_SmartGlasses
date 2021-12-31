@@ -14,7 +14,7 @@ from utils.augmentations import letterbox
 # ======================================================================================================================
 # 设置参数
 imgsz = 640
-weights = './yolov5l.pt'
+weights = './yolov5n.pt'
 device = 'cpu'
 half = False
 line_thickness = 2
